@@ -1,0 +1,6 @@
+{
+  "name": "PyBG - Python Learning Platform",
+  "description": "Интерактивна платформа за учене на Python с упражнения, детски визуален режим, персонален учебен план, менторство и общност.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
