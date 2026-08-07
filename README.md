@@ -5,7 +5,7 @@
 🤖 **PyBG AI Tutor**
 Your AI-powered coding tutor that helps you understand code, fix errors, and learn step by step.
 
-✨ Powered by **Gemini 3.6** for smarter AI assistance.
+✨ Powered by **Gemini 3.6** for smarter AI assistance.Offline
 
 💻 Lessons • Practice • Coding • Projects
 🎮 Build your own games
