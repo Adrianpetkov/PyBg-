@@ -45,6 +45,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
   
   const [aiAnalysis, setAiAnalysis] = useState<any | null>(null);
   const [loadingAi, setLoadingAi] = useState<boolean>(false);
+  const [aiAnalysisEnabled, setAiAnalysisEnabled] = useState<boolean>(true);
   
   const [currentHint, setCurrentHint] = useState<string | null>(null);
   const [hintLevel, setHintLevel] = useState<number>(0);
@@ -69,12 +70,8 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
     }
   }, [selectedExercise]);
 
-  // Handle Run Code
-  const handleRun = async () => {
-    const result = runPythonCode(code);
-    setExecutionResult(result);
-
-    // Call Gemini AI Real-Time Feedback
+  // Manual AI Analysis Trigger
+  const triggerManualAiAnalysis = async () => {
     setLoadingAi(true);
     try {
       const res = await fetch('/api/gemini/analyze-code', {
@@ -90,13 +87,29 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
       const data = await res.json();
       setAiAnalysis(data);
 
-      if (data.isCorrect || result.output.trim() === selectedExercise.expectedOutput.trim()) {
+      if (data.isCorrect) {
         onExerciseComplete(selectedExercise.id, selectedExercise.xp);
       }
     } catch (e) {
       console.error(e);
     } finally {
       setLoadingAi(false);
+    }
+  };
+
+  // Handle Run Code
+  const handleRun = async () => {
+    const result = runPythonCode(code);
+    setExecutionResult(result);
+
+    // Check direct local output match
+    if (result.output.trim() === selectedExercise.expectedOutput.trim()) {
+      onExerciseComplete(selectedExercise.id, selectedExercise.xp);
+    }
+
+    // Call Gemini AI Real-Time Feedback if AI Analysis is enabled
+    if (aiAnalysisEnabled) {
+      await triggerManualAiAnalysis();
     }
   };
 
@@ -445,16 +458,38 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
           <div className={`p-4 rounded-2xl border text-xs space-y-2 ${
             userProfile.darkTheme ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
           }`}>
-            <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-2">
               <span className="flex items-center gap-1.5 font-bold text-indigo-400">
                 <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
                 <span>{isBg ? 'AI Анализ в реално време' : 'AI Real-time Review'}</span>
               </span>
-              {loadingAi && (
-                <span className="text-[10px] text-indigo-400 animate-pulse">
-                  {isBg ? 'Анализиране...' : 'Analyzing...'}
-                </span>
-              )}
+
+              <div className="flex items-center gap-2">
+                {/* AI Toggle ON / OFF Button */}
+                <button
+                  onClick={() => setAiAnalysisEnabled(!aiAnalysisEnabled)}
+                  className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold border transition flex items-center gap-1 ${
+                    aiAnalysisEnabled
+                      ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/30'
+                      : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700 hover:text-slate-200'
+                  }`}
+                  title={isBg ? 'Включете или изключете автоматичния AI преглед' : 'Toggle automatic AI code review'}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full ${aiAnalysisEnabled ? 'bg-emerald-400 animate-ping' : 'bg-slate-500'}`} />
+                  <span>{aiAnalysisEnabled ? (isBg ? 'AI Анализ: ВКЛ' : 'AI Analysis: ON') : (isBg ? 'AI Анализ: ИЗКЛ' : 'AI Analysis: OFF')}</span>
+                </button>
+
+                {/* Manual AI Analyze Button */}
+                <button
+                  onClick={triggerManualAiAnalysis}
+                  disabled={loadingAi}
+                  className="px-2 py-0.5 rounded bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 font-mono text-[10px] font-bold border border-indigo-500/30 transition flex items-center gap-1 disabled:opacity-50"
+                  title={isBg ? 'Стартирай незабавен AI анализ' : 'Run instant AI analysis'}
+                >
+                  <Sparkles className={`w-3 h-3 ${loadingAi ? 'animate-spin' : ''}`} />
+                  <span>{loadingAi ? (isBg ? 'Анализ...' : 'Analyzing...') : (isBg ? 'Анализирай' : 'Analyze')}</span>
+                </button>
+              </div>
             </div>
 
             {aiAnalysis ? (
